@@ -1,6 +1,6 @@
 # AISolverForPegSolitaire-GraphSearch
 
-You can play the game with the keyboard by executing
+You can play the game with the keyboard by executing:
 ./pegsol <level>
 where level ∈ {0, . . . , 8} for standard levels.
 
