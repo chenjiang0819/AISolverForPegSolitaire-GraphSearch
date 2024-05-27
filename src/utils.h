@@ -6,7 +6,6 @@
  Description : Console version of the game "peg-solitaire" for GNU/Linux
  
  Developed by: Chen Jiang
- Student ID  :1127411
  ============================================================================
  */
 #ifndef __UTILS__
