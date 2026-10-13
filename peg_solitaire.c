@@ -13,8 +13,12 @@
 #include "src/ai.h"
 #include <stdio.h>
 #include <time.h>
+#include <errno.h>
+#include <limits.h>
+#include <ctype.h>
 
 void setBufferedInput(bool enable) {
+	if (!isatty(STDIN_FILENO)) return;
 	static bool enabled = true;
 	static struct termios old;
 	struct termios new;
@@ -26,7 +30,7 @@ void setBufferedInput(bool enable) {
 		enabled = true;
 	} else if (!enable && enabled) {
 		// get the terminal settings for standard input
-		tcgetattr(STDIN_FILENO,&new);
+		if (tcgetattr(STDIN_FILENO,&new)!=0) return;
 		// we want to keep the old setting to restore them at the end
 		old = new;
 		// disable canonical mode (buffered i/o) and local echo
@@ -46,7 +50,7 @@ void signal_callback_handler(int signum) {
 	exit(signum);
 }
 
-void print_usage(){
+void print_usage(void){
     printf("To run the AI solver, <level> and <budget> are integers, play_solution is optional. \n");
     printf("\tUSAGE: ./pegsol <level> AI <budget> play_solution\n");
     printf("\t\tor, to play with the keyboard: \n");
@@ -58,38 +62,24 @@ int main(int argc, char *argv[]) {
 	 * Parsing command line options
 	 */
 
-	//if just one input
-	if( argc < 2 ){
-	    print_usage();
-	    return 0;
-	}
-	
-	state_t board_alloc;
-	state_t* board = &board_alloc;
-	
-	//which level of game
-	int layout = 0; // (default: 0)
-
-	//if 2 inputs
-	sscanf (argv[1],"%d",&layout);
-
-	//if 3 inputs(means using AI)
-	ai_run = false; // (default: false)
-	if(  argc > 2 && strcmp(argv[2],"AI")==0 ){
-		ai_run = true;
-	}
-	//add budget
-	budget = 1000000; //(default: 1M)
-	if( argc > 3 ){
-		sscanf (argv[3],"%d",&budget);
-	}
-	
-	//if 4 inputs(whether showing the solutions)
-	show_solution = false; // (default: false)
-	if(  argc > 4 && strcmp(argv[4],"play_solution")==0 ){
-		show_solution = true;
-	}
-
+    if (argc<2 || argc>6) { print_usage();return EXIT_FAILURE; }
+    char *end;errno=0;long level=strtol(argv[1],&end,10);
+    if (errno || !*argv[1] || *end || level<0 || level>8) { print_usage();return EXIT_FAILURE; }
+    int layout=(int)level;
+    state_t board_alloc;
+    state_t *board=&board_alloc;
+    ai_run=argc>2;
+    if (ai_run && strcmp(argv[2],"AI")) {print_usage();return EXIT_FAILURE;}
+    budget=1000000;
+    if (argc>3) {
+        errno=0;long requested=strtol(argv[3],&end,10);
+        if (errno || !*argv[3] || *end || requested<1 || requested>INT_MAX) { print_usage();return EXIT_FAILURE; }
+        budget=(int)requested;
+    }
+    show_solution=false;
+    if (argc==5 && !strcmp(argv[4],"play_solution")) show_solution=true;
+    else if (argc==6 && !strcmp(argv[4],"play") && !strcmp(argv[5],"solution")) show_solution=true;
+    else if (argc>4) { print_usage();return EXIT_FAILURE; }
 
 	// reset, hide cursor and clear screen
 	printf("\033[0m\033[?25l\033[2J");
@@ -126,10 +116,10 @@ int main(int argc, char *argv[]) {
 		printf("SOLUTION:                               \n");
 		print_solution( );
 		printf("STATS: \n");
-		printf("\tExpanded nodes: %'d\n\tGenerated nodes: %'d\n", expanded_nodes, generated_nodes);
+		printf("\tExpanded nodes: %d\n\tGenerated nodes: %d\n", expanded_nodes, generated_nodes);
 		printf("\tSolution Length: %d\n", solution_size);
 		printf("\tNumber of Pegs Left: %d\n", num_pegs( &(solution[solution_size]) ) );
-		printf("\tExpanded/seconds: %d\n", (int)(expanded_nodes/cpu_time_used) );
+		printf("\tExpanded/seconds: %.0f\n", cpu_time_used>0 ? expanded_nodes/cpu_time_used : 0.0 );
 		printf("\tTime (seconds): %f\n", cpu_time_used );
 
 		setBufferedInput(true);
@@ -139,10 +129,11 @@ int main(int argc, char *argv[]) {
 
 		
 		int8_t moves = 0;
-		char c;
+		int c;
 		bool success,move;
 		while (true) {
 			c=getchar();
+            if (c==EOF) break;
 			move = (*board).selected;
 			switch(c) {
 				case 97:	// 'a' key

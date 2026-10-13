@@ -10,7 +10,17 @@
 #include "utils.h"
 #include "layouts.h"
 
+state_t solution[SIZE*SIZE];
+move_t  solution_moves[SIZE*SIZE];
+int solution_size;
+int generated_nodes;
+int expanded_nodes;
+bool ai_run;
+bool show_solution;
+int budget;
+
 void execute_move_t(state_t* state, position_s* selected_peg, move_t jump) {
+    if (!can_apply(state, selected_peg, jump)) return;
     int8_t x = selected_peg->x;
     int8_t y = selected_peg->y;
 
@@ -50,6 +60,8 @@ void execute_move_t(state_t* state, position_s* selected_peg, move_t jump) {
 
 bool can_apply(state_t *board, position_s* selected_peg, move_t jump){
     
+    if (!board || !selected_peg || selected_peg->x<0 || selected_peg->x>=SIZE ||
+        selected_peg->y<0 || selected_peg->y>=SIZE || jump<left || jump>down) return false;
     // Can select a Peg
     if ( board->field[ selected_peg->x ][ selected_peg->y ] !='o')  return false;
     
@@ -237,7 +249,7 @@ bool gameEndedForHuman(state_t *board) {
 void initialize(state_t *board, int8_t layout) {
 	int8_t x,y;
 
-	if( layout > NUM_LAYOUTS - 1){ 
+    if( layout < 0 || layout > NUM_LAYOUTS - 1){
 		layout = 0;
 	}
 	
@@ -316,14 +328,14 @@ char* action_cstr(move_t move){
 	return " ";
 }
 
-void print_solution(){
+void print_solution(void){
 
 	for(int i=0; i< solution_size; i++)
 		printf("    %d - %s                              \n", i+1, action_cstr(solution_moves[i]));
 		
 }
 
-void play_solution(){
+void play_solution(void){
 	for(int i=0; i <= solution_size; i++){
 		drawBoard(&(solution[i]));
 		usleep(500000);

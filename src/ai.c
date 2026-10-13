@@ -41,6 +41,7 @@ void save_solution(node_t* solution_node ){
 //create and initialise the node
 node_t* create_init_node(state_t* init_state ){
 	node_t * new_n = (node_t *) malloc(sizeof(node_t));
+	if (!new_n) return NULL;
 	new_n->parent = NULL;	
 	new_n->next_free = NULL;
 	new_n->depth = 0;
@@ -54,6 +55,7 @@ node_t* create_init_node(state_t* init_state ){
 node_t* applyAction(node_t* n, position_s* selected_peg, move_t action ){
     node_t* new_node = create_init_node(&(n -> state));
 	//FILL IN MISSING CODE
+    if (!new_node) return NULL;
     //calculate the depth of the new node
     new_node -> depth =  n -> depth + 1;
     //copy the board state from old node to the new node
@@ -80,7 +82,8 @@ int do_action(int* remain_Pegs, move_t move_to, node_t* n, HashTable* table, pos
 	if(can_apply(&(n -> state), selected_peg, move_to)){
 		//if available, execute the action and generate a node
 		node_t* new_node = applyAction(n, selected_peg, move_to);
-		generated_nodes ++;
+		if (!new_node) { free_memory(table); fprintf(stderr,"Allocation failed\n"); exit(EXIT_FAILURE); }
+        generated_nodes ++;
 		//if AI won the game, return true
 		if(won(&(new_node -> state)) == 1){
 			//save the solution
@@ -116,24 +119,34 @@ int do_action(int* remain_Pegs, move_t move_to, node_t* n, HashTable* table, pos
 			}
 			rotateBoard(&(new_node -> state));
 			//if it is not in the Hash table, we put it in the Hash table and push it in the stack
-			ht_insert(table, new_node -> state.field, new_node -> state.field);
+			if (ht_insert(table, new_node -> state.field, new_node -> state.field)==HT_ERROR) {
+                free(new_node);free_memory(table);fprintf(stderr,"Hash allocation failed\n");exit(EXIT_FAILURE);
+            }
 			stack_push(new_node);
 			return 0;
 		}
 	}
+    return 0;
 }
 
 void find_solution(state_t* init_state){
+    expanded_nodes=generated_nodes=solution_size=0;
+    copy_state(&solution[0],init_state);
+    initialize_stack();
+    if (budget<=0 || won(init_state)) return;
     move_t move_to;
 	HashTable table;
 	position_s selected_peg;
 	// Choose initial capacity of PRIME NUMBER 
 	// Specify the size of the keys and values you want to store once 
-	ht_setup(&table, sizeof(int8_t) * SIZE * SIZE, sizeof(int8_t) * SIZE * SIZE, 16769023);
+	if (ht_setup(&table, sizeof(int8_t) * SIZE * SIZE, sizeof(int8_t) * SIZE * SIZE, 8191)==HT_ERROR) {
+        fprintf(stderr,"Hash allocation failed\n");exit(EXIT_FAILURE);
+    }
 	// Initialize Stack
 	initialize_stack();
 	//Add the initial node
 	node_t* n = create_init_node(init_state);
+    if (!n) { ht_destroy(&table);fprintf(stderr,"Allocation failed\n");exit(EXIT_FAILURE); }
 	//FILL IN THE GRAPH ALGORITHM
 	//push the first node in the stack
 	stack_push(n);
@@ -195,6 +208,7 @@ void find_solution(state_t* init_state){
 			return;
 		}
 	}
+    free_memory(&table);
 }
 
 //free all used memories
