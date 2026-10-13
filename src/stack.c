@@ -11,15 +11,18 @@
 #include "stack.h"
 #include "utils.h"
 
+node_t* stack[STACK_SIZE];
+int stack_top_idx = -1;
 
-void initialize_stack(){ 
+
+void initialize_stack(void){
 	stack_top_idx = -1; 
 }
 
 void stack_push(node_t* n) {
   if(stack_top_idx == STACK_SIZE -1) { // overflow case. 
-		printf("Error: stack overflow\n");
-		return;
+		fprintf(stderr,"Error: stack capacity exceeded\n");
+        free(n); free_stack(); exit(EXIT_FAILURE);
 	}
 	//In order to free all nodes, we make a linked list to store the nodes in the linked list
 	stack_top_idx++;
@@ -29,7 +32,7 @@ void stack_push(node_t* n) {
 	stack[stack_top_idx] = n;
 }
 
-void stack_pop() {
+void stack_pop(void) {
 	if(stack_top_idx == -1) { // If stack is empty, pop should throw error. 
 		printf("Error: No element to pop\n");
 		return;
@@ -37,18 +40,18 @@ void stack_pop() {
 	stack_top_idx--;
 }
 
-node_t* stack_top() { 
+node_t* stack_top(void) {
 	return stack[stack_top_idx]; 
 }
 
-int is_stack_empty() {
+int is_stack_empty(void) {
     if(stack_top_idx == -1) {
     	return 1;
 	}
     return 0;
 }
 
-void print_stack() {
+void print_stack(void) {
 	printf("Stack: ");
 	for(int i = 0; i<=stack_top_idx; i++){
 		drawBoard( &(stack[i]->state) );
@@ -56,17 +59,18 @@ void print_stack() {
 	printf("\n");
 }
 
-void free_stack() {
+void free_stack(void) {
 	node_t* curr;
 	node_t* pre;
 	//for releasing all memories used by nodes, we traverse every linked list in the stack
-	for(int i = 0; stack[i] != NULL; i++){		
+    for(int i = 0; i<STACK_SIZE; i++){
 		curr = stack[i];
 		while((curr) != NULL){
 			pre = curr;
 			curr = curr -> next_free;
 			free(pre);
 		}
+        stack[i]=NULL;
 	}
     stack_top_idx = -1;
 	printf("\n");

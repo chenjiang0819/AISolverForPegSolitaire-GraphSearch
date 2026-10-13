@@ -68,16 +68,16 @@ typedef struct node_s node_t;
  * GLOBAL VARIABLES
 */
 
-state_t solution[SIZE*SIZE];
-move_t  solution_moves[SIZE*SIZE];
-int solution_size;
+extern state_t solution[SIZE*SIZE];
+extern move_t  solution_moves[SIZE*SIZE];
+extern int solution_size;
 
-int generated_nodes;
-int expanded_nodes;
+extern int generated_nodes;
+extern int expanded_nodes;
 
-bool ai_run; //Run AI
-bool show_solution; //Play solution found by AI algorithm
-int budget; // budget for expanded nodes
+extern bool ai_run; //Run AI
+extern bool show_solution; //Play solution found by AI algorithm
+extern int budget; // budget for expanded nodes
 
 /**
  *  Useful functions for AI algorithm
@@ -114,8 +114,8 @@ void initialize(state_t *board, int8_t layout);
 */
 void drawBoard(state_t *board);
 char* action_cstr(move_t move);
-void print_solution();
-void play_solution();
+void print_solution(void);
+void play_solution(void);
 
 
 #endif

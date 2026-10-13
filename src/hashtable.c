@@ -128,7 +128,7 @@ int ht_insert(HashTable* table, void* key, void* value) {
 	if (key == NULL) return HT_ERROR;
 
 	if (_ht_should_grow(table)) {
-		_ht_adjust_capacity(table);
+		if (_ht_adjust_capacity(table)==HT_ERROR) return HT_ERROR;
 	}
 
 	index = _ht_hash(table, key);
@@ -352,9 +352,11 @@ _ht_create_node(HashTable* table, void* key, void* value, HTNode* next) {
 		return NULL;
 	}
 	if ((node->key = malloc(table->key_size)) == NULL) {
+        free(node);
 		return NULL;
 	}
 	if ((node->value = malloc(table->value_size)) == NULL) {
+        free(node->key);free(node);
 		return NULL;
 	}
 
@@ -366,8 +368,10 @@ _ht_create_node(HashTable* table, void* key, void* value, HTNode* next) {
 }
 
 int _ht_push_front(HashTable* table, size_t index, void* key, void* value) {
-	table->nodes[index] = _ht_create_node(table, key, value, table->nodes[index]);
-	return table->nodes[index] == NULL ? HT_ERROR : HT_SUCCESS;
+	HTNode *node = _ht_create_node(table, key, value, table->nodes[index]);
+    if (!node) return HT_ERROR;
+    table->nodes[index]=node;
+    return HT_SUCCESS;
 }
 
 void _ht_destroy_node(HTNode* node) {
@@ -383,10 +387,12 @@ int _ht_adjust_capacity(HashTable* table) {
 }
 
 int _ht_allocate(HashTable* table, size_t capacity) {
-	if ((table->nodes = malloc(capacity * sizeof(HTNode*))) == NULL) {
+	HTNode **nodes=malloc(capacity * sizeof(HTNode*));
+    if (nodes == NULL) {
 		return HT_ERROR;
 	}
-	memset(table->nodes, 0, capacity * sizeof(HTNode*));
+	table->nodes=nodes;
+    memset(table->nodes, 0, capacity * sizeof(HTNode*));
 
 	table->capacity = capacity;
 	table->threshold = capacity * HT_LOAD_FACTOR;

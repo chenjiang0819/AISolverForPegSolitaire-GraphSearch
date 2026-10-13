@@ -13,27 +13,27 @@
 #include "utils.h"
 
 // The upperbound solution length = size of the matrix * 4 moves = maximum possible number of pegs * 4 moves
-#define STACK_SIZE SIZE*SIZE* 4
+#define STACK_SIZE (SIZE*SIZE*SIZE*SIZE*4)
 
 // Stack as an arrray
-node_t* stack[STACK_SIZE]; 
+extern node_t* stack[STACK_SIZE];
 
 // Variable marking the top of the stack
-int stack_top_idx;  
+extern int stack_top_idx;
 
 // Needs to be called before using it for the first time
-void initialize_stack();
+void initialize_stack(void);
 
 void stack_push(node_t* n); 
 
-void stack_pop();
+void stack_pop(void);
 
-node_t* stack_top();
+node_t* stack_top(void);
 
-int is_stack_empty();
+int is_stack_empty(void);
 
-void print_stack();
+void print_stack(void);
 
-void free_stack();
+void free_stack(void);
 
 #endif
