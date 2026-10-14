@@ -8,6 +8,8 @@ University: University of Melbourne
 
 ## Implementation
 
+Chen implemented the search extension on Maurits van der Schee’s peg-solitaire game, using the attributed goldsborough hash-table implementation.
+
 Explicit search nodes, stack-based expansion, parent-linked solution reconstruction, board-state duplicate detection across rotations, and bounded-search statistics.
 
 ## Technical approach
