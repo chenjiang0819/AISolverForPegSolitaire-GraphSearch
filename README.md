@@ -1,5 +1,13 @@
 # Peg Solitaire Graph Search Solver
 
+## Academic Context
+
+University: University of Melbourne  
+Course: Coursework; exact course number not independently established  
+Year: Exact original submission year not independently established  
+Project type: individual
+
+
 ## Overview
 
 A C console peg-solitaire game with a handwritten depth-first graph-search extension, rotational duplicate-state detection, bounded expansion, and solution-path reconstruction.
